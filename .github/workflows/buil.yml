@@ -1,0 +1,106 @@
+name: Build FFmpeg for ARM64
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: multiarch/qemu-user-static:register
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v2
+
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v1
+      with:
+        platforms: arm64
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          pkg-config \
+          git \
+          curl \
+          cmake \
+          ninja-build \
+          meson \
+          yasm \
+          nasm \
+          libtool \
+          autoconf \
+          automake \
+          texinfo \
+          zlib1g-dev \
+          libfdk-aac-dev \
+          libmp3lame-dev \
+          libopus-dev \
+          libvpx-dev \
+          libx264-dev \
+          libx265-dev \
+          libdrm-dev \
+          libssl-dev \
+          libmediainfo-dev \
+          openjdk-8-jdk
+
+    - name: Clone FFmpeg source
+      run: |
+        git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
+        cd ffmpeg
+        git checkout release/6.1.1
+
+    - name: Configure and build FFmpeg
+      run: |
+        cd ffmpeg
+        ./configure \
+          --arch=arm64 \
+          --enable-cross-compile \
+          --cross-prefix=aarch64-linux-gnu- \
+          --target-os=linux \
+          --enable-gpl \
+          --enable-nonfree \
+          --enable-libfdk-aac \
+          --enable-libmp3lame \
+          --enable-libopus \
+          --enable-libvpx \
+          --enable-libx264 \
+          --enable-libx265 \
+          --enable-mediacodec \
+          --enable-static \
+          --disable-shared \
+          --disable-debug \
+          --extra-cflags="-I/usr/aarch64-linux-gnu/include" \
+          --extra-ldflags="-L/usr/aarch64-linux-gnu/lib"
+        make -j$(nproc)
+        make install
+
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: 'v6.1.1'
+        release_name: 'FFmpeg arrch64 v6.1.1'
+        draft: false
+        prerelease: false
+
+    - name: Upload FFmpeg binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: /usr/local/bin/ffmpeg
+        asset_name: ffmpeg-6.1.1-aar64
+        asset_content_type: application/octet-stream
