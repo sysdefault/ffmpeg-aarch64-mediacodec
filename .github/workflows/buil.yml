@@ -52,7 +52,7 @@ jobs:
       run: |
         git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
         cd ffmpeg
-        git checkout release/6.1.1
+        git checkout n6.1.1
 
     - name: Configure and build FFmpeg
       run: |
