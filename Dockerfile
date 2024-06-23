@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     automake \
     texinfo \
     zlib1g-dev \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
     libfdk-aac-dev \
     libmp3lame-dev \
     libopus-dev \
@@ -58,3 +60,9 @@ RUN ./configure \
       --extra-ldflags="-L/usr/aarch64-linux-gnu/lib" && \
     make -j$(nproc) && \
     make install
+
+# 复制可执行文件
+RUN cp /workspace/ffmpeg/ffmpeg /output/ffmpeg
+
+# 设置输出目录
+VOLUME /output
