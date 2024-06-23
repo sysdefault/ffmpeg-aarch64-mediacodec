@@ -11,75 +11,18 @@ on:
 jobs:
   arm64:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [arm64]
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v2
 
-    - name: Install dependencies
+    - name: Build Docker image
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          pkg-config \
-          git \
-          curl \
-          cmake \
-          ninja-build \
-          meson \
-          yasm \
-          nasm \
-          libtool \
-          autoconf \
-          automake \
-          texinfo \
-          zlib1g-dev \
-          gcc-aarch64-linux-gnu \
-          g++-aarch64-linux-gnu \
-          crossbuild-essential-arm64 \
-          libfdk-aac-dev:arm64 \
-          libmp3lame-dev:arm64 \
-          libopus-dev:arm64 \
-          libvpx-dev:arm64 \
-          libx264-dev:arm64 \
-          libx265-dev:arm64 \
-          libdrm-dev:arm64 \
-          libssl-dev:arm64 \
-          libmediainfo-dev:arm64
+        docker build -t ffmpeg-arm64 .
 
-    - name: Clone FFmpeg source
+    - name: Run Docker container
       run: |
-        git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
-        cd ffmpeg
-        git checkout n6.1.1
-
-    - name: Configure and build FFmpeg
-      run: |
-        cd ffmpeg
-        PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig ./configure \
-          --arch=arm64 \
-          --enable-cross-compile \
-          --cross-prefix=aarch64-linux-gnu- \
-          --target-os=linux \
-          --enable-gpl \
-          --enable-nonfree \
-          --enable-libfdk-aac \
-          --enable-libmp3lame \
-          --enable-libopus \
-          --enable-libvpx \
-          --enable-libx264 \
-          --enable-libx265 \
-          --enable-mediacodec \
-          --enable-static \
-          --disable-shared \
-          --disable-debug \
-          --extra-cflags="-I/usr/aarch64-linux-gnu/include" \
-          --extra-ldflags="-L/usr/aarch64-linux-gnu/lib"
-        make -j$(nproc)
-        sudo make install
+        docker run --rm -v ${{ github.workspace }}/output:/output ffmpeg-arm64
 
     - name: Create release
       id: create_release
@@ -98,6 +41,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: /usr/local/bin/ffmpeg
+        asset_path: /output/ffmpeg
         asset_name: ffmpeg-6.1.1-aarch64
         asset_content_type: application/octet-stream
