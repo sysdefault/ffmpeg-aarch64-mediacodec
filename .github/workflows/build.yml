@@ -46,7 +46,9 @@ jobs:
           libdrm-dev \
           libssl-dev \
           libmediainfo-dev \
-          openjdk-8-jdk
+          openjdk-8-jdk \
+          gcc-aarch64-linux-gnu \
+          g++-aarch64-linux-gnu
 
     - name: Clone FFmpeg source
       run: |
